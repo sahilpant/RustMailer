@@ -13,6 +13,7 @@ name = "rustmailer"
 
 [dependencies]
 actix-web = "4.11.0"
+serde = { version = "1.0.219", features = ["derive"] }
 tokio = { version = "1.47.1", features = ["full"] }
 
 [dev-dependencies]
