@@ -2,7 +2,7 @@
 name = "rustmailer"
 version = "0.1.0"
 authors = ["Sahil Pant <sahilpant16@gmail.com>"]
-edition = "2021"
+edition = "2024"
 
 [lib]
 path = "src/lib.rs"
@@ -12,10 +12,23 @@ path = "src/main.rs"
 name = "rustmailer"
 
 [dependencies]
-actix-web = "4.11.0"
-serde = { version = "1.0.219", features = ["derive"] }
-tokio = { version = "1.47.1", features = ["full"] }
+actix-web = "4.12.1"
+config = "0.15.19"
+serde = { version = "1.0.228", features = ["derive"] }
+tokio = { version = "1.48.0", features = ["full"] }
+
+[dependencies.sqlx]
+version="0.8.6"
+default-features=false
+features = [
+    "runtime-tokio-rustls",
+    "macros",
+    "postgres",
+    "uuid",
+    "chrono",
+    "migrate"
+]
 
 [dev-dependencies]
-reqwest = "0.12.22"
+reqwest = "0.12.26"
 

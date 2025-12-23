@@ -1,9 +1,8 @@
 use std::net::TcpListener;
-
-use rustmailer::run;
+use rustmailer::startup::run;
 
 #[tokio::test]
-async fn test_name() {
+async fn health_check_works() {
     let host_port = spawn_app();
     let client = reqwest::Client::new();
     let url = format!("http://{host_port}/health_check");
@@ -16,15 +15,16 @@ async fn test_name() {
     assert_eq!(Some(0), res.content_length());
 }
 
+#[tokio::test]
 async fn subscribe_returns_a_200_for_valid_form_data() {
     let host_port = spawn_app();
     let client = reqwest::Client::new();
     let url = format!("http://{host_port}/subscriptions");
 
-    let body = "name=sahil%20pant&email=sahilpant16%40gmail.com";
+    let body = "username=sahil%20pant&email=sahilpant16%40gmail.com";
     let response = client
         .post(url)
-        .header("Conten-Type", "application/x-www-form-urlencoded")
+        .header("Content-Type", "application/x-www-form-urlencoded")
         .body(body)
         .send()
         .await
@@ -39,7 +39,7 @@ async fn subscribe_returns_a_400_when_data_is_missing() {
     let client = reqwest::Client::new();
     let url = format!("http://{host_port}/subscriptions");
     let test_cases = vec![
-        ("name=sahil%20pant", "missingtheemail"),
+        ("username=sahil%20pant", "missingtheemail"),
         ("email=sahilpant16n%40gmail.com", "missing the name"),
         ("", "missing both name and email"),
     ];

@@ -1,2 +1,10 @@
 GET http://0.0.0.0:8080/health_check
 User-Agent: TestClient
+
+####
+
+POST http://0.0.0.0:8080/subscriptions
+Content-Type: application/x-www-form-urlencoded
+
+username=sahil%20pant
+&email=sahilpant16%40gmail.com
