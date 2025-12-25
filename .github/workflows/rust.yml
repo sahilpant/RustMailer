@@ -18,7 +18,8 @@ jobs:
     - uses: actions/checkout@v4
     - name: SetUpDB
       run: sudo apt update && sudo apt upgrade
-    - run: sudo apt-get install docker postgresql
+    - run: chmod +x docker_setup.script && ./docker_setup.script.sh
+    - run: sudo apt-get install postgresql
     - run: cargo install sqlx-cli
     - run: ./db_setup_script.sh
     - name: Build
