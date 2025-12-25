@@ -2,9 +2,9 @@ name: Rust
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "github_actions" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "github_actions" ]
 
 env:
   CARGO_TERM_COLOR: always
@@ -16,6 +16,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: SetUpDB
+      run: sudo apt update && sudo apt upgrade
+    - run: sudo apt-get install docker postgresql
+    - run: cargo install sqlx-cli
+    - run: ./db_setup_script.sh
     - name: Build
       run: cargo build --verbose
     - name: Run tests
