@@ -1,0 +1,53 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "github_actions" ]
+  pull_request:
+    branches: [ "github_actions" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: rustmailer
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+    - uses: actions/checkout@v4
+    - name: Export common env
+      run: |
+        echo "DATABASE_URL=postgres://postgres:password@localhost:5432/rustmailer" >> $GITHUB_ENV
+        echo "SERVER_HOST=0.0.0.0" >> $GITHUB_ENV
+        echo "SERVER_PORT=8080" >> $GITHUB_ENV
+    - name: Cache cargo build
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          cargo-${{ runner.os }}-
+    - name: Install sqlx
+      run: cargo install sqlx-cli --no-default-features --features postgres
+    - name: Database Migration
+      run: sqlx migrate run
+    - name: Build
+      run: cargo build --verbose
+    - name: Run tests
+      run: cargo test --verbose
