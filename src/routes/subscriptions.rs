@@ -1,5 +1,5 @@
 use actix_web::{HttpResponse, Responder, web};
-use sqlx::{PgConnection, PgPool};
+use sqlx::PgPool;
 use uuid::Uuid;
 use chrono::Utc;
 

@@ -1,7 +1,7 @@
 use std::net::TcpListener;
 
 use rustmailer::{configuration::get_configuration, startup::run};
-use sqlx::{Connection, PgConnection, PgPool};
+use sqlx::PgPool;
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
