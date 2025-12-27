@@ -1,8 +1,11 @@
-use rustmailer::{configuration::{DatabaseSettings, get_configuration}, startup::run};
-use sqlx::{Connection, PgConnection, PgPool};
-use uuid::Uuid;
-use std::net::TcpListener;
+use rustmailer::{
+    configuration::{DatabaseSettings, get_configuration},
+    startup::run,
+};
 use sqlx::Executor;
+use sqlx::{Connection, PgConnection, PgPool};
+use std::net::TcpListener;
+use uuid::Uuid;
 
 pub struct TestApp {
     pub address: String,
@@ -49,7 +52,6 @@ async fn subscribe_returns_a_200_for_valid_form_data() {
 
     assert_eq!(saved.email, "sahilpant16@gmail.com");
     assert_eq!(saved.name, "sahil pant");
-
 }
 
 #[tokio::test]
@@ -98,9 +100,19 @@ async fn spawn_app() -> TestApp {
 }
 
 pub async fn configure_database(config: DatabaseSettings) -> PgPool {
-    let mut connection = PgConnection::connect(&config.connection_string_without_db()).await.expect("Unableto connect to db");
-    connection.execute(format!(r#"CREATE DATABASE "{}";"#,config.database_name).as_str()).await.expect("Unable to create the table");
-    let connect_pool = PgPool::connect(&config.connection_string()).await.expect("Unable to connect to Postgres");
-    sqlx::migrate!("./migrations").run(&connect_pool).await.expect("Failed to migrate the database");
+    let mut connection = PgConnection::connect(&config.connection_string_without_db())
+        .await
+        .expect("Unableto connect to db");
+    connection
+        .execute(format!(r#"CREATE DATABASE "{}";"#, config.database_name).as_str())
+        .await
+        .expect("Unable to create the table");
+    let connect_pool = PgPool::connect(&config.connection_string())
+        .await
+        .expect("Unable to connect to Postgres");
+    sqlx::migrate!("./migrations")
+        .run(&connect_pool)
+        .await
+        .expect("Failed to migrate the database");
     connect_pool
 }
