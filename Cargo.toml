@@ -15,13 +15,20 @@ name = "rustmailer"
 actix-web = "4.12.1"
 chrono = "0.4.42"
 config = "0.15.19"
+env_logger = "0.11.8"
 file = "0.1.1"
 fixed = "1.29.0"
 github-actions = "0.0.4"
+log = "0.4.29"
+secrecy = { version = "0.10.3", features = ["serde"] }
 serde = { version = "1.0.228", features = ["derive"] }
 tokio = { version = "1.48.0", features = ["full"] }
+tracing = { version = "0.1.44", features = ["log"] }
+tracing-actix-web = "0.7.20"
+tracing-bunyan-formatter = "0.3.10"
+tracing-log = "0.2.0"
+tracing-subscriber = { version = "0.3.22", features = ["registry", "env-filter"] }
 uuid =  { version = "1.19.0", features = ["v4"] }
-yaml = "0.3.0"
 
 [dependencies.sqlx]
 version="0.8.6"

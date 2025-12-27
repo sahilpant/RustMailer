@@ -1,36 +1,69 @@
 use actix_web::{HttpResponse, Responder, web};
-use sqlx::{PgConnection, PgPool};
-use uuid::Uuid;
 use chrono::Utc;
+use sqlx::PgPool;
+use tracing::Instrument;
+use uuid::Uuid;
 
 #[derive(serde::Deserialize)]
 pub struct FormData {
     name: String,
     email: String,
 }
-/// Actix web uses a type-map to represnt its application state: 
-/// a Hashmap that stores arbitary data (using the Any type) 
-/// against their unique type identifier (obtained by TypeId::of)
-pub async fn subscribe(
-    form: web::Form<FormData>,
-    connection: web::Data<PgPool>,
-) -> impl Responder {
-    match sqlx::query!(r#"
+
+#[tracing::instrument(
+    name = "Adding a new subscriber",
+    skip(form,connection)
+    fields(
+        subscriber_email = %form.email,
+        subscriber_name = %form.name
+    )
+)]
+pub async fn subscribe(form: web::Form<FormData>, connection: web::Data<PgPool>) -> impl Responder {
+    let query_span = tracing::info_span!("Saving new subscriber details in the database");
+    match sqlx::query!(
+        r#"
         INSERT INTO subscriptions(id, email, name, subscribed_at)
         VALUES($1, $2, $3, $4)
     "#,
-    Uuid::new_v4(),
-    form.email,
-    form.name,
-    Utc::now()
+        Uuid::new_v4(),
+        form.email,
+        form.name,
+        Utc::now()
     )
     .execute(connection.get_ref())
-    .await 
+    .instrument(query_span)
+    .await
     {
-        Ok(_) => HttpResponse::Ok().finish(),
+        Ok(_) => {
+            tracing::info!("New subscriber details have been saved");
+            HttpResponse::Ok().finish()
+        }
         Err(e) => {
-            println!("Failed to execute query: {}", e);
+            tracing::error!("Failed to execute query: {:?}", e);
             HttpResponse::InternalServerError().finish()
         }
     }
+}
+
+#[tracing::instrument(
+    name = "Saving new subscriber details in the database",
+    skip(form,pool)
+)]
+pub async fn insert_subscriber(pool: &PgPool, form: &FormData) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"
+        INSERT INTO subscriptions(id, email, name, subscribed_at)
+        VALUES($1, $2, $3, $4)
+    "#,
+        Uuid::new_v4(),
+        form.email,
+        form.name,
+        Utc::now()
+    ).execute(pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to execute query: {:?}",e);
+        e
+    })?;
+    Ok(())
 }

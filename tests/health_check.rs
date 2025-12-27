@@ -1,13 +1,25 @@
-use rustmailer::{configuration::{DatabaseSettings, get_configuration}, startup::run};
-use sqlx::{Connection, PgConnection, PgPool};
-use uuid::Uuid;
-use std::net::TcpListener;
+use rustmailer::{
+    configuration::{DatabaseSettings, get_configuration},
+    startup::run, telemetry::{get_subscriber, init_subscriber},
+};
+use secrecy::ExposeSecret;
 use sqlx::Executor;
+use sqlx::{Connection, PgConnection, PgPool};
+use std::{net::TcpListener, sync::LazyLock};
+use uuid::Uuid;
 
 pub struct TestApp {
     pub address: String,
     pub db_pool: PgPool,
 }
+
+static TRACING:LazyLock<()> = LazyLock::new(|| {
+    if std::env::var("TEST_LOG").is_ok() {
+        init_subscriber(get_subscriber(std::io::stdout));
+    } else {
+        init_subscriber(get_subscriber(std::io::sink));
+    }
+});
 
 #[tokio::test]
 async fn health_check_works() {
@@ -49,7 +61,6 @@ async fn subscribe_returns_a_200_for_valid_form_data() {
 
     assert_eq!(saved.email, "sahilpant16@gmail.com");
     assert_eq!(saved.name, "sahil pant");
-
 }
 
 #[tokio::test]
@@ -80,6 +91,7 @@ async fn subscribe_returns_a_400_when_data_is_missing() {
 }
 
 async fn spawn_app() -> TestApp {
+    let _ = *TRACING;
     let tcplistner = TcpListener::bind("0.0.0.0:0").expect("Failed to bind random address");
     let address = tcplistner
         .local_addr()
@@ -98,9 +110,19 @@ async fn spawn_app() -> TestApp {
 }
 
 pub async fn configure_database(config: DatabaseSettings) -> PgPool {
-    let mut connection = PgConnection::connect(&config.connection_string_without_db()).await.expect("Unableto connect to db");
-    connection.execute(format!(r#"CREATE DATABASE "{}";"#,config.database_name).as_str()).await.expect("Unable to create the table");
-    let connect_pool = PgPool::connect(&config.connection_string()).await.expect("Unable to connect to Postgres");
-    sqlx::migrate!("./migrations").run(&connect_pool).await.expect("Failed to migrate the database");
+    let mut connection = PgConnection::connect(&config.connection_string_without_db().expose_secret())
+        .await
+        .expect("Unableto connect to db");
+    connection
+        .execute(format!(r#"CREATE DATABASE "{}";"#, config.database_name).as_str())
+        .await
+        .expect("Unable to create the table");
+    let connect_pool = PgPool::connect(&config.connection_string().expose_secret())
+        .await
+        .expect("Unable to connect to Postgres");
+    sqlx::migrate!("./migrations")
+        .run(&connect_pool)
+        .await
+        .expect("Failed to migrate the database");
     connect_pool
 }
