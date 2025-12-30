@@ -2265,6 +2265,7 @@ dependencies = [
  "actix-web",
  "chrono",
  "config",
+ "dotenvy",
  "env_logger",
  "file",
  "fixed",

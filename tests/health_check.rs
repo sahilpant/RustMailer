@@ -1,6 +1,7 @@
 use rustmailer::{
     configuration::{DatabaseSettings, get_configuration},
-    startup::run, telemetry::{get_subscriber, init_subscriber},
+    startup::run,
+    telemetry::{get_subscriber, init_subscriber},
 };
 use secrecy::ExposeSecret;
 use sqlx::Executor;
@@ -13,7 +14,7 @@ pub struct TestApp {
     pub db_pool: PgPool,
 }
 
-static TRACING:LazyLock<()> = LazyLock::new(|| {
+static TRACING: LazyLock<()> = LazyLock::new(|| {
     if std::env::var("TEST_LOG").is_ok() {
         init_subscriber(get_subscriber(std::io::stdout));
     } else {
@@ -110,9 +111,10 @@ async fn spawn_app() -> TestApp {
 }
 
 pub async fn configure_database(config: DatabaseSettings) -> PgPool {
-    let mut connection = PgConnection::connect(&config.connection_string_without_db().expose_secret())
-        .await
-        .expect("Unableto connect to db");
+    let mut connection =
+        PgConnection::connect(&config.connection_string_without_db().expose_secret())
+            .await
+            .expect("Unableto connect to db");
     connection
         .execute(format!(r#"CREATE DATABASE "{}";"#, config.database_name).as_str())
         .await
