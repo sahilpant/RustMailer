@@ -19,7 +19,7 @@ docker run \
 postgres -N 1000
 # ^ Increased maximum number of connections for testing purposes
 
-until psql -h "localhost" -U "${DB_USER}" -p "${DB_PORT}" -d "postgres" -c '\q'; do
+until PGPASSWORD="${DB_PASSWORD}" psql -h "localhost" -U "${DB_USER}" -p "${DB_PORT}" -d "postgres" -c '\q'; do
     >&2 echo "postgres is still down - sleeping"
     sleep 1
 done
