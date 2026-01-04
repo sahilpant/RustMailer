@@ -1,9 +1,6 @@
-use serde::Deserialize;
+use crate::domain::{subscriber_email::SubscriberEmail, subscriber_name::SubscriberName};
 
-use crate::domain::subscriber_name::SubscriberName;
-
-#[derive(Deserialize)]
 pub struct NewSubscriber {
-    pub email: String,
+    pub email: SubscriberEmail,
     pub name: SubscriberName
 }
