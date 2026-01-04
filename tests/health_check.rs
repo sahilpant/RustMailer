@@ -93,7 +93,7 @@ async fn subscribe_returns_a_400_when_data_is_missing() {
 }
 
 #[tokio::test]
-async fn subscriber_returns_a_200_when_a_field_is_present_but_empty() {
+async fn subscriber_returns_a_400_when_a_field_is_present_but_empty() {
     let app = spawn_app().await;
     let client = reqwest::Client::new();
     let test_class = vec![
@@ -112,9 +112,9 @@ async fn subscriber_returns_a_200_when_a_field_is_present_but_empty() {
 
 
         assert_eq!(
-            200,
+            400,
             response.status().as_u16(),
-            "The API did not returned a 200 OK when the payload was {}",
+            "The API did not returned a 400 when the payload was {}",
             description
         )
     }

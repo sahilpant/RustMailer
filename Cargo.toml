@@ -12,7 +12,7 @@ path = "src/main.rs"
 name = "rustmailer"
 
 [dependencies]
-actix-web = "4.12.1"
+actix-web = { version = "4.12.1", default-features = false, features = ["macros"] }
 chrono = "0.4.42"
 config = "0.15.19"
 dotenvy = "0.15.7"
@@ -31,6 +31,7 @@ tracing-log = "0.2.0"
 tracing-subscriber = { version = "0.3.22", features = ["registry", "env-filter"] }
 unicode-segmentation = "1.12.0"
 uuid =  { version = "1.19.0", features = ["v4"] }
+validator = "0.20.0"
 
 [dependencies.sqlx]
 version="0.8.6"
@@ -45,5 +46,8 @@ features = [
 ]
 
 [dev-dependencies]
-reqwest = "0.12.26"
-
+claims = "0.8.0"
+fake = "4.4.0"
+quickcheck = "1.0.0"
+quickcheck_macros = "1.1.0"
+reqwest = "0.13.1"
