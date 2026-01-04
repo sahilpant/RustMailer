@@ -3,6 +3,7 @@ use chrono::Utc;
 use sqlx::PgPool;
 use tracing::Instrument;
 use uuid::Uuid;
+use unicode_segmentation::UnicodeSegmentation;
 
 #[derive(serde::Deserialize)]
 pub struct FormData {
@@ -19,29 +20,13 @@ pub struct FormData {
     )
 )]
 pub async fn subscribe(form: web::Form<FormData>, connection: web::Data<PgPool>) -> impl Responder {
-    let query_span = tracing::info_span!("Saving new subscriber details in the database");
-    match sqlx::query!(
-        r#"
-        INSERT INTO subscriptions(id, email, name, subscribed_at)
-        VALUES($1, $2, $3, $4)
-    "#,
-        Uuid::new_v4(),
-        form.email,
-        form.name,
-        Utc::now()
-    )
-    .execute(connection.get_ref())
-    .instrument(query_span)
-    .await
+    if !is_valid_name(&form.name) {
+        return HttpResponse::BadRequest().finish();
+    }
+    match insert_subscriber(&connection, &form).await 
     {
-        Ok(_) => {
-            tracing::info!("New subscriber details have been saved");
-            HttpResponse::Ok().finish()
-        }
-        Err(e) => {
-            tracing::error!("Failed to execute query: {:?}", e);
-            HttpResponse::InternalServerError().finish()
-        }
+        Ok(_) => HttpResponse::Ok().finish(),
+        Err(_) => HttpResponse::InternalServerError().finish()
     }
 }
 
@@ -67,4 +52,16 @@ pub async fn insert_subscriber(pool: &PgPool, form: &FormData) -> Result<(), sql
         e
     })?;
     Ok(())
+}
+
+fn is_valid_name(name: impl AsRef<str>) -> bool {
+    let is_empty_or_whitespace = name.as_ref().trim().is_empty();
+
+    let is_too_long = name.as_ref().graphemes(true).count() > 256;
+
+    let forbidden_characters = ['/','(', ')', '"', '<', '>', '\\', '{', '}'];
+
+    let contains_forbidden_charachters = name.as_ref().chars().any(|s| forbidden_characters.contains(&s));
+
+    !(is_empty_or_whitespace || is_too_long || contains_forbidden_charachters)
 }

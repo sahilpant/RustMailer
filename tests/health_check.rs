@@ -6,6 +6,7 @@ use rustmailer::{
 use secrecy::ExposeSecret;
 use sqlx::Executor;
 use sqlx::{Connection, PgConnection, PgPool};
+use tracing_subscriber::fmt::format;
 use std::{net::TcpListener, sync::LazyLock};
 use uuid::Uuid;
 
@@ -70,7 +71,7 @@ async fn subscribe_returns_a_400_when_data_is_missing() {
     let client = reqwest::Client::new();
     let url = format!("http://{host_port}/subscriptions");
     let test_cases = vec![
-        ("username=sahil%20pant", "missingtheemail"),
+        ("name=sahil%20pant", "missing the email"),
         ("email=sahilpant16n%40gmail.com", "missing the name"),
         ("", "missing both name and email"),
     ];
@@ -89,6 +90,36 @@ async fn subscribe_returns_a_400_when_data_is_missing() {
             error_message
         );
     }
+}
+
+#[tokio::test]
+async fn subscriber_returns_a_200_when_a_field_is_present_but_empty() {
+    let app = spawn_app().await;
+    let client = reqwest::Client::new();
+    let test_class = vec![
+        ("name=&email=sahilpant16@gmail.com","empty name"),
+        ("name=sahil&email=","empty email"),
+        ("name=sahil&email=not-an-email", "invalid email")
+    ];
+    for (body, description) in test_class {
+        let response = client
+        .post(&format!("http://{}/subscriptions",&app.address))
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .body(body)
+        .send()
+        .await
+        .expect("Failed to execute request.");
+
+
+        assert_eq!(
+            200,
+            response.status().as_u16(),
+            "The API did not returned a 200 OK when the payload was {}",
+            description
+        )
+    }
+
+
 }
 
 async fn spawn_app() -> TestApp {
